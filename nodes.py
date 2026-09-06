@@ -19,8 +19,10 @@ class SMPLxExportHunyuanOmni:
     FUNCTION = "export"
     CATEGORY = "SMPLx"
 
-    def export(self, smplx_data, model_path, gender):
-        # load smplx model
+    def export(self, smplx, model_path, gender):
+        # 解决变量名冲突：输入数据包存入smplx_data，smplx库保持可用
+        smplx_data = smplx
+
         smpl_model = smplx.create(
             model_path=model_path,
             model_type="smplx",
@@ -53,7 +55,6 @@ class SMPLxExportHunyuanOmni:
         joints = output.joints.detach().cpu().numpy()
         vertices = output.vertices.detach().cpu().numpy()
 
-        # build skeleton json for Hunyuan3D Omni
         skeleton_dict = {
             "joints": joints.tolist(),
             "verts": vertices.tolist(),
@@ -64,7 +65,6 @@ class SMPLxExportHunyuanOmni:
         }
         skeleton_post_json = json.dumps(skeleton_dict, ensure_ascii=False, indent=2)
 
-        # simple pose bone text
         pose_bone_txt = f"""global_orient={global_orient.tolist()}
 transl={transl.tolist()}
 body_pose={body_pose.shape}
