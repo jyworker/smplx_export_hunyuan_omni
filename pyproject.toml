@@ -1,0 +1,14 @@
+[project]
+name = "smplx_export_hunyuan_omni"
+description = "ComfyUI node that exports SMPLX pose data to Hunyuan3D-Omni skeleton formats (pose_bone TXT + skeleton JSON)."
+version = "1.0.0"
+license = { file = "LICENSE" }
+dependencies = ["torch", "smplx", "numpy"]
+
+[project.urls]
+Repository = "https://github.com/jyworker/smplx_export_hunyuan_omni"
+
+[tool.comfy]
+PublisherId = "jyworker"
+DisplayName = "SMPLx Export Hunyuan3D-Omni"
+Icon = ""
