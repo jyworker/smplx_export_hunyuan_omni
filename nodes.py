@@ -1,9 +1,7 @@
-import torch
-import smplx
 import json
 import numpy as np
 
-# ===================== Hunyuan3D‑Omni官方52根骨骼拓扑，顺序不可修改 =====================
+# Hunyuan3D‑Omni官方52根骨骼配对，顺序严禁改动
 OFFICIAL_BONE_PAIRS = [
     (0, 1), (1, 2), (2, 3), (3, 4), (4, 5),
     (1, 6), (6, 7), (7, 8), (8, 9),
@@ -21,7 +19,6 @@ OFFICIAL_BONE_PAIRS = [
     (11,46),(46,47),(47,48),
     (11,49),(49,50),(50,51)
 ]
-# ======================================================================================
 
 class SMPLxExportHunyuanOmni:
     @classmethod
@@ -37,27 +34,11 @@ class SMPLxExportHunyuanOmni:
     CATEGORY = "SMPLx-Estimator/Export"
 
     def export(self, smplx):
-        device = smplx["betas"].device
-        #加载SMPLX neutral模型
-        smpl_model = smplx.create(
-            model_path="models/smplx",
-            model_type="smplx",
-            gender="neutral",
-            use_face_contour=False
-        ).to(device)
-        #前向计算关节坐标
-        out = smpl_model(
-            betas=smplx["betas"],
-            global_orient=smplx["global_orient"],
-            body_pose=smplx["body_pose"],
-            left_hand_pose=smplx["left_hand_pose"],
-            right_hand_pose=smplx["right_hand_pose"],
-            transl=smplx["transl"],
-            expression=smplx["expression"]
-        )
-        joints_np = out.joints[0].detach().cpu().numpy() # [54,3]
+        # 直接读取插件已经计算好的关节坐标，不需要smplx库和模型前向传播
+        joints_tensor = smplx["joints"][0]  # [54,3]
+        joints_np = joints_tensor.detach().cpu().numpy()
 
-        #=====1、生成PoseMaster pose_bone.txt（带归一化，防止漂移）=====
+        # =====生成PoseMaster txt（包围盒归一化，解决人物漂移）=====
         all_points = joints_np.copy()
         center = (all_points.max(axis=0)+all_points.min(axis=0)) / 2.0
         scale = (all_points.max(axis=0)-all_points.min(axis=0)).max()
@@ -73,7 +54,7 @@ class SMPLxExportHunyuanOmni:
             txt_lines.append(line)
         pose_txt_content = "\n".join(txt_lines)
 
-        #=====2、生成skeleton post.json=====
+        # =====生成post.json skeleton格式=====
         joints_list = joints_np.tolist()
         json_data = {
             "control_type":"skeleton",
@@ -82,7 +63,6 @@ class SMPLxExportHunyuanOmni:
             }
         }
         json_content = json.dumps(json_data,indent=2,ensure_ascii=False)
-
         return (pose_txt_content,json_content,)
 
 NODE_CLASS_MAPPINGS = {
